@@ -86,6 +86,8 @@ allocproc(void)
   return 0;
 
 found:
+	p->isThread = 0;  // When process is created it is not a thread
+
   p->state = EMBRYO;
   p->pid = nextpid++;
 
@@ -196,6 +198,9 @@ fork(void)
     np->state = UNUSED;
     return -1;
   }
+  
+  
+  np->isThread = 0;  // Process is Not a thread
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
