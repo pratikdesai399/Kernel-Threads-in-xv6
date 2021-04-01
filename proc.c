@@ -288,6 +288,11 @@ wait(void)
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->parent != curproc)
         continue;
+        
+      if(p->isThread){
+      	continue;                         //Wait should ignore threads
+      
+      }
       havekids = 1;
       if(p->state == ZOMBIE){
         // Found one.
