@@ -226,6 +226,13 @@ fork(void)
   return pid;
 }
 
+
+//Clone Sys Call
+int clone(){
+  cprintf("Clone SYSTEM CALL\n");
+  return 0;
+}
+
 // Exit the current process.  Does not return.
 // An exited process remains in the zombie state
 // until its parent calls wait() to find out it exited.
