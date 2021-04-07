@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#define PGSIZE 4096
 
 struct {
   struct spinlock lock;
@@ -227,10 +228,74 @@ fork(void)
 }
 
 
-//Clone Sys Call
-int clone(){
+//Clone System Call
+int clone(void(*f)(void*), void* arg, void* stack){
   cprintf("Clone SYSTEM CALL\n");
-  return 0;
+  int pid;
+  
+  struct proc *np;
+  struct proc *currproc = myproc();    //Pointer to current running process
+
+  //Process Allocation
+  if((np = allocproc()) == 0){
+    return -1;
+  }
+
+  //Checking if sufficient memory was allocated for stack or not
+  if((uint)stack%PGSIZE != 0){
+    return -1;
+  }
+
+  np->pgdir = currproc->pgdir;
+  np->isThread = 1;   //Process is a thread
+  np->tstack = stack;   //user stack
+  np->parent = currproc;
+  *np->tf = *currproc->tf;
+  np->sz = currproc->sz;
+  pid = np->pid;
+
+  //return value 0
+  np->tf->eax = 0;
+
+  for(int i = 0; i < NOFILE; i++)
+    if(currproc->ofile[i])
+      np->ofile[i] = filedup(currproc->ofile[i]);
+  np->cwd = idup(currproc->cwd);
+
+  safestrcpy(np->name, currproc->name, sizeof(currproc->name));
+
+  //Address Space for user stack
+  uint* user_stack = stack + PGSIZE - sizeof(uint*);
+  cprintf("SPACE ALLOCATION FOR USERSTACK : %d\n", (uint) user_stack);
+
+  //Arg for the thread
+  *user_stack = (uint)arg;
+  cprintf("Argument : %d\n", (uint) user_stack);
+
+  user_stack -= 1;
+  *user_stack = 0xffffffff;
+  cprintf("Fake Return : %d\n", (uint) user_stack);
+
+  //Setting up esp and ebp 
+  np->tf->ebp = (uint)user_stack;
+  np->tf->esp = (uint)user_stack;
+
+  //Child thread to be started from this address
+  np->tf->eip = (uint)f;
+
+
+
+
+
+  cprintf("PID for cloned process : %d\n", pid);
+
+  acquire(&ptable.lock);
+
+  np->state = RUNNABLE;
+
+  release(&ptable.lock);
+
+  return pid;
 }
 
 // Exit the current process.  Does not return.
