@@ -298,6 +298,62 @@ int clone(void(*f)(void*), void* arg, void* stack){
   return pid;
 }
 
+//Join System Call
+int join(int pid){
+  cprintf("Enter Join");
+  struct proc *p;
+  int havekids, new_pid;
+  struct proc *parent = myproc();
+
+  acquire(&ptable.lock);
+  for (;;){
+    // Scan through table looking for the thread need to wait.
+    havekids = 0;
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if (p->pid == pid){
+        if (p->parent != parent || p->isThread == 0 ){
+          release(&ptable.lock);
+          return -1;
+        }
+
+        havekids = 1;
+
+        if (p->state == ZOMBIE){
+          // Found one.
+          new_pid = p->pid;
+          kfree(p->kstack);
+          p->kstack = 0;
+          p->pid = 0;
+          p->parent = 0;
+          p->name[0] = 0;
+          p->killed = 0;
+          p->state = UNUSED;
+          release(&ptable.lock);
+          cprintf("JOIN DONE\n");
+          return new_pid;
+      }
+
+      }else{
+        continue;
+      }
+
+      
+
+      
+    }
+    
+
+    // No point waiting if we don't have any children.
+    if (!havekids || parent->killed){
+      release(&ptable.lock);
+      return -1;
+    }
+    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    sleep(parent, &ptable.lock); //DOC: wait-sleep
+  }
+
+}
+
 // Exit the current process.  Does not return.
 // An exited process remains in the zombie state
 // until its parent calls wait() to find out it exited.
@@ -614,3 +670,5 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+
