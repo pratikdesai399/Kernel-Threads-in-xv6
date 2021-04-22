@@ -230,7 +230,7 @@ fork(void)
 
 //Clone System Call
 int clone(void(*f)(void*), void* arg, void* stack){
-  cprintf("Clone SYSTEM CALL\n");
+  //cprintf("Clone SYSTEM CALL\n");
   int pid;
   
   struct proc *np;
@@ -266,15 +266,15 @@ int clone(void(*f)(void*), void* arg, void* stack){
 
   //Address Space for user stack
   uint* user_stack = stack + PGSIZE - sizeof(uint*);
-  cprintf("SPACE ALLOCATION FOR USERSTACK : %d\n", (uint) user_stack);
+  //cprintf("SPACE ALLOCATION FOR USERSTACK : %d\n", (uint) user_stack);
 
   //Arg for the thread
   *user_stack = (uint)arg;
-  cprintf("Argument : %d\n", (uint) user_stack);
+  //cprintf("Argument : %d\n", (uint) user_stack);
 
   user_stack -= 1;
   *user_stack = 0xffffffff;
-  cprintf("Fake Return : %d\n", (uint) user_stack);
+  //cprintf("Fake Return : %d\n", (uint) user_stack);
 
   //Setting up esp and ebp 
   np->tf->ebp = (uint)user_stack;
@@ -287,7 +287,7 @@ int clone(void(*f)(void*), void* arg, void* stack){
 
 
 
-  cprintf("PID for cloned process : %d\n", pid);
+  //cprintf("PID for cloned process : %d\n", pid);
 
   acquire(&ptable.lock);
 
@@ -300,7 +300,7 @@ int clone(void(*f)(void*), void* arg, void* stack){
 
 //Join System Call
 int join(int pid){
-  cprintf("Enter Join");
+  //cprintf("Enter Join");
   struct proc *p;
   int havekids, new_pid;
   struct proc *parent = myproc();
@@ -329,17 +329,13 @@ int join(int pid){
           p->killed = 0;
           p->state = UNUSED;
           release(&ptable.lock);
-          cprintf("JOIN DONE\n");
+          //cprintf("JOIN DONE\n");
           return new_pid;
       }
 
       }else{
         continue;
       }
-
-      
-
-      
     }
     
 
