@@ -4,7 +4,7 @@
 #include "user.h"
 
 
-THREAD create_thread(void (*start)(void *), void *arg){
+THREAD create_thread(void(*start)(void *), void *arg){
     int stack_addr;
     void* stack = malloc(4096);
     stack_addr = (uint)stack;

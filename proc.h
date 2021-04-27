@@ -51,6 +51,7 @@ struct proc {
   char name[16];               // Process name (debugging)
   int isThread;                // Process is a thread or not
   void *tstack;                // Stack used by thread in clone
+  struct proc *pthread;
 };
 
 // Process memory is laid out contiguously, low addresses first:

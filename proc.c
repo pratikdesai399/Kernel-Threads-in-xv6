@@ -163,6 +163,7 @@ growproc(int n)
 {
   uint sz;
   struct proc *curproc = myproc();
+  struct proc *p;
 
   sz = curproc->sz;
   if(n > 0){
@@ -173,6 +174,14 @@ growproc(int n)
       return -1;
   }
   curproc->sz = sz;
+
+  //THREAD
+  for(p = ptable.proc; p<&ptable.proc[NPROC]; p++){
+    if(p->pthread == curproc){
+      p->sz = sz;
+    }
+  }
+
   switchuvm(curproc);
   return 0;
 }
@@ -241,15 +250,18 @@ int clone(void(*f)(void*), void* arg, void* stack){
     return -1;
   }
 
-  //Checking if sufficient memory was allocated for stack or not
-  if((uint)stack%PGSIZE != 0){
-    return -1;
+  if(currproc->isThread == 0){
+    np->parent = currproc;
+  }else{
+    np->parent = currproc->parent;
   }
 
+ 
+
   np->pgdir = currproc->pgdir;
+  np->pthread= currproc;
   np->isThread = 1;   //Process is a thread
   np->tstack = stack;   //user stack
-  np->parent = currproc;
   *np->tf = *currproc->tf;
   np->sz = currproc->sz;
   pid = np->pid;
@@ -327,6 +339,7 @@ int join(int pid){
           p->parent = 0;
           p->name[0] = 0;
           p->killed = 0;
+          p->pthread = 0;
           p->state = UNUSED;
           release(&ptable.lock);
           //cprintf("JOIN DONE\n");
@@ -380,6 +393,7 @@ exit(void)
 
   // Parent might be sleeping in wait().
   wakeup1(curproc->parent);
+  wakeup1(curproc->pthread);
 
   // Pass abandoned children to init.
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
@@ -666,5 +680,6 @@ procdump(void)
     cprintf("\n");
   }
 }
+
 
 
