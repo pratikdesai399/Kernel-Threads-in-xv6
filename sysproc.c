@@ -95,10 +95,11 @@ int sys_clone(void){
   char* f; 
   char* arg; 
   char* stack;
-  if( argptr(0,&f, sizeof(char*)) < 0 || argptr(1, &arg,sizeof(char*)) < 0 || argptr(2, &stack,sizeof(char*)) < 0 ){
+  int flags;
+  if( argptr(0,&f, sizeof(char*)) < 0 || argptr(1, &arg,sizeof(char*)) < 0 || argptr(2, &stack,sizeof(char*)) < 0 || argint(3, &flags) < 0){
     return -1;
   }
-  return clone((void*)f, (void*)arg, (void*)stack);
+  return clone((void*)f, (void*)arg, (void*)stack, flags);
 
 }
 
@@ -109,4 +110,8 @@ int sys_join(void){
   }
 
   return join(pid);
+}
+
+int sys_gettgid(void){
+  return myproc()->parent->pid;
 }

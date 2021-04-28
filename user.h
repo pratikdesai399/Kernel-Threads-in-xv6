@@ -23,8 +23,10 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int clone(void(*f)(void*), void* arg, void* stack);
+int clone(void(*f)(void*), void* arg, void* stack, int flags);
 int join(int pid);
+int gettgid(void);
+
 
 // ulib.c
 int stat(const char*, struct stat*);
