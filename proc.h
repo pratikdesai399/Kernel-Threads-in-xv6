@@ -52,6 +52,7 @@ struct proc {
   int isThread;                // Process is a thread or not
   void *tstack;                // Stack used by thread in clone
   struct proc *pthread;
+  int tgid;
 };
 
 // Process memory is laid out contiguously, low addresses first:

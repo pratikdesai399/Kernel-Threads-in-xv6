@@ -5,12 +5,12 @@
 #include "fcntl.h"
 
 
-THREAD create_thread(void(*start)(void *), void *arg){
+THREAD create_thread(void(*start)(void *), void *arg, int flags){
     int stack_addr;
-    int flags = 0;
+    
     void* stack = malloc(4096);
     stack_addr = (uint)stack;
-    int ret = clone(start, arg, stack,flags || CLONE_VM);
+    int ret = clone(start, arg, stack,flags);
 
     THREAD thread;
     thread.pid = ret;

@@ -6,7 +6,7 @@ typedef struct THREAD{
     void* stack;
 }THREAD;
 
-THREAD create_thread(void (*start)(void *), void *arg);
+THREAD create_thread(void (*start)(void *), void *arg, int flags);
 int join_threads(THREAD t);
 
 

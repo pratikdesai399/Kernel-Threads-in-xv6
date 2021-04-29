@@ -127,6 +127,8 @@ userinit(void)
   extern char _binary_initcode_start[], _binary_initcode_size[];
 
   p = allocproc();
+
+  p->tgid = p->pid;
   
   initproc = p;
   if((p->pgdir = setupkvm()) == 0)
@@ -209,7 +211,7 @@ fork(void)
     return -1;
   }
   
-  
+  np->tgid = np->pid;
   np->isThread = 0;  // Process is Not a thread
   np->sz = curproc->sz;
   np->parent = curproc;
@@ -335,7 +337,9 @@ int clone(void(*f)(void*), void* arg, void* stack, int flags){
 
   //CLONE_THREAD FLAG HANDLING
   if(CLONE_THREAD){
-    
+    np->tgid = currproc->tgid;
+  }else{
+    np->tgid = currproc->pid;
   }
 
  
@@ -406,7 +410,7 @@ int join(int pid){
     havekids = 0;
     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if (p->pid == pid){
-        if (p->parent!= parent || p->isThread == 0 ){
+        if (p->parent!= parent || p->isThread == 0 || p->tgid != parent->tgid){
           release(&ptable.lock);
           return -1;
         }
@@ -419,6 +423,7 @@ int join(int pid){
           kfree(p->kstack);
           p->kstack = 0;
           p->pid = 0;
+          p->tgid = 0;
           p->parent = 0;
           p->name[0] = 0;
           p->killed = 0;
@@ -514,6 +519,11 @@ wait(void)
       	continue;                         //Wait should ignore threads
       
       }
+      if(curproc->isThread){
+        if(p->parent->tgid != curproc->tgid){
+          continue;
+        }
+      }
       havekids = 1;
       if(p->state == ZOMBIE){
         // Found one.
@@ -524,6 +534,7 @@ wait(void)
         p->pid = 0;
         p->parent = 0;
         p->name[0] = 0;
+        p->tgid = 0;
         p->killed = 0;
         p->state = UNUSED;
         release(&ptable.lock);

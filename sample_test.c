@@ -2,6 +2,7 @@
 #include "stat.h"
 #include "user.h"
 #include "threadlib.h"
+#include "fcntl.h"
 
 // void test2(void* arg){
 //     char *str = (char*)arg;
@@ -39,7 +40,7 @@ int main(int argc, char *argv[])
 
     THREAD threads[100];
     for(int i = 0; i < 100; i++){
-        threads[i] = create_thread(test1, (void*)i);
+        threads[i] = create_thread(test1, (void*)i, CLONE_VM);
         join_threads(threads[i]);
         printf(1,"PID: %d\n", threads[i].pid);
 

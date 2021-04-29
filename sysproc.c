@@ -113,5 +113,5 @@ int sys_join(void){
 }
 
 int sys_gettgid(void){
-  return myproc()->parent->pid;
+  return myproc()->tgid;
 }
