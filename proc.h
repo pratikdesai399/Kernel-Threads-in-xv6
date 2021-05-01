@@ -53,6 +53,11 @@ struct proc {
   void *tstack;                // Stack used by thread in clone
   struct proc *pthread;
   int tgid;
+  int CLONE_VM;
+  int CLONE_FILES;
+  int CLONE_FS;
+  int CLONE_PARENT;
+  int CLONE_THREAD;
 };
 
 // Process memory is laid out contiguously, low addresses first:

@@ -123,6 +123,9 @@ void            yield(void);
 int             clone(void(*)(void*), void*, void*,int);
 int             join(int);
 int             gettgid(void);
+int             getppid(void);
+int             gettid(void);
+int             threadkill(int);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

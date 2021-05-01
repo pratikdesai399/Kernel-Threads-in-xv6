@@ -1,43 +1,37 @@
 #include "types.h"
 #include "stat.h"
 #include "user.h"
-#include "fs.h"
+#include "threadlib.h"
 #include "fcntl.h"
-#include "syscall.h"
-#include "traps.h"
 
-volatile int globalCounter = 0;
-
-void addToCounter(){
-  globalCounter++;
-  printf(1, "COUNTER IS: %x\n", globalCounter);
+void fn(void* arg){
+  printf(1,"HELLO\n");
   exit();
 }
 
-int
-main(int argc, char *argv[])
-{
- int pid;
- void * stack[10];
-
- printf(1, "RUNNING TESTS\n");
- globalCounter++;
- printf(1, "COUNTER BEFORE CLONE: %x\n", globalCounter);
-
- int x;
- for(x=0; x<10; x++){
-   stack[x] = malloc(4096);
-   pid = clone((void *) &addToCounter, (void *) &globalCounter, (void *) stack[x], CLONE_VM);
-   join(pid);
-   printf(1, "PID: %d\n", pid);
- }
-
-
-
- globalCounter++;
- printf(1, "JOINED\n");
-
- printf(1, "COUNTER SHOULD BE 12 AND IT IS = %d\n", globalCounter);
- exit();
- return 0;
+void test1(void* arg){
+  int fd = open("README", O_RDWR);
+  printf(1,"\n%d\n", fd);
+  exit();
 }
+
+int main(int argc, char *argv[])
+{
+    
+    THREAD t[478];
+    //char buff[100];
+    
+    for(int i = 0; i < 478; i++){
+      t[i] = create_thread(fn,0, CLONE_VM);
+      printf(1,"%d\n", t[i].pid);
+      join_threads(t[i]);
+    }
+    // THREAD t;
+    // t = create_thread(test1, 0, CLONE_VM || CLONE_FILES);
+    // join_threads(t);
+    // int ret = read(3,&buff, 10);
+    // printf(1,"%d\n",ret);
+    // write(1, &buff, 10);
+    // exit();
+}
+

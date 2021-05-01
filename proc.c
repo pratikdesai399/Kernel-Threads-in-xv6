@@ -241,37 +241,7 @@ fork(void)
 
 //Clone System Call
 int clone(void(*f)(void*), void* arg, void* stack, int flags){
-  //Getting flags first
-  int CLONE_VM, CLONE_FS, CLONE_FILES, CLONE_PARENT, CLONE_THREAD;
-  if(flags & (1 << 0)){
-    CLONE_VM = 1;
-  }else{
-    CLONE_VM = 0;
-  }
-
-  if(flags & (1 << 1)){
-    CLONE_FS = 1;
-  }else{
-    CLONE_FS = 0;
-  }
-
-  if(flags & (1 << 2)){
-    CLONE_FILES = 1;
-  }else{
-    CLONE_FILES = 0;
-  }
-
-  if(flags & (1 << 3)){
-    CLONE_PARENT = 1;
-  }else{
-    CLONE_PARENT = 0;
-  }
-
-  if(flags & (1 << 4)){
-    CLONE_THREAD = 1;
-  }else{
-    CLONE_THREAD = 0;
-  }
+  
   //cprintf("Clone SYSTEM CALL\n");
   int pid,i;
   
@@ -283,8 +253,38 @@ int clone(void(*f)(void*), void* arg, void* stack, int flags){
     return -1;
   }
 
+  if(flags & (1 << 0)){
+    np->CLONE_VM = 1;
+  }else{
+    np->CLONE_VM = 0;
+  }
+
+  if(flags & (1 << 1)){
+    np->CLONE_FS = 1;
+  }else{
+    np->CLONE_FS = 0;
+  }
+
+  if(flags & (1 << 2)){
+    np->CLONE_FILES = 1;
+  }else{
+    np->CLONE_FILES = 0;
+  }
+
+  if(flags & (1 << 3)){
+    np->CLONE_PARENT = 1;
+  }else{
+    np->CLONE_PARENT = 0;
+  }
+
+  if(flags & (1 << 4)){
+    np->CLONE_THREAD = 1;
+  }else{
+    np->CLONE_THREAD = 0;
+  }
+
   //CLONE_VM FLAG HANDLING
-  if(CLONE_VM){
+  if(np->CLONE_VM){
     np->pgdir = currproc->pgdir;
   }else{
       // Copy process state from proc.
@@ -298,14 +298,14 @@ int clone(void(*f)(void*), void* arg, void* stack, int flags){
   }
 
   //CLONE_FS FLAG HANDLING
-  if(CLONE_FS){
+  if(np->CLONE_FS){
     np->cwd = currproc->cwd;
   }else{
     np->cwd = idup(currproc->cwd);
   }
 
   //CLONE_FILES FLAG HANDLING
-  if(CLONE_FILES){
+  if(np->CLONE_FILES){
     for(i = 0; i < NOFILE; i++){
       if(currproc->ofile[i]){
         np->ofile[i] = currproc->ofile[i];
@@ -322,13 +322,13 @@ int clone(void(*f)(void*), void* arg, void* stack, int flags){
   //CLONE_PARENT FLAG HANDLING
 
   if(currproc->isThread == 0){
-    if(CLONE_PARENT){
+    if(np->CLONE_PARENT){
       np->parent = currproc->parent;
     }else{
       np->parent = currproc;
     }
   }else{
-    if(CLONE_PARENT){
+    if(np->CLONE_PARENT){
       np->parent = currproc->parent->parent;
     }else{
       np->parent = currproc->parent;
@@ -336,7 +336,7 @@ int clone(void(*f)(void*), void* arg, void* stack, int flags){
   }
 
   //CLONE_THREAD FLAG HANDLING
-  if(CLONE_THREAD){
+  if(np->CLONE_THREAD){
     np->tgid = currproc->tgid;
   }else{
     np->tgid = currproc->pid;
@@ -775,5 +775,23 @@ procdump(void)
   }
 }
 
+
+int threadkill(int pid){
+   struct proc *p;
+
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->pid == pid && p->isThread == 1){
+      p->killed = 1;
+      // Wake process from sleep if necessary.
+      if(p->state == SLEEPING)
+        p->state = RUNNABLE;
+      release(&ptable.lock);
+      return 0;
+    }
+  }
+  release(&ptable.lock);
+  return -1;
+}
 
 

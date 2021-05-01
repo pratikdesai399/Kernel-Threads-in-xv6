@@ -26,6 +26,9 @@ int uptime(void);
 int clone(void(*f)(void*), void* arg, void* stack, int flags);
 int join(int pid);
 int gettgid(void);
+int getppid(void);
+int gettid(void);
+int threadkill(int pid);
 
 
 // ulib.c

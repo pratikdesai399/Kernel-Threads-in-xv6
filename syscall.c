@@ -106,6 +106,9 @@ extern int sys_uptime(void);
 extern int sys_clone(void);
 extern int sys_join(void);
 extern int sys_gettgid(void);
+extern int sys_getppid(void);
+extern int sys_gettid(void);
+extern int sys_threadkill(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -132,6 +135,9 @@ static int (*syscalls[])(void) = {
 [SYS_clone]   sys_clone,
 [SYS_join]    sys_join,
 [SYS_gettgid] sys_gettgid,
+[SYS_getppid] sys_getppid,
+[SYS_gettid]  sys_gettid,
+[SYS_threadkill] sys_threadkill,
 
 
 
