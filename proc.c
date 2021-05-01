@@ -165,7 +165,7 @@ growproc(int n)
 {
   uint sz;
   struct proc *curproc = myproc();
-  struct proc *p;
+  //struct proc *p;
 
   sz = curproc->sz;
   if(n > 0){
@@ -178,11 +178,11 @@ growproc(int n)
   curproc->sz = sz;
 
   //THREAD
-  for(p = ptable.proc; p<&ptable.proc[NPROC]; p++){
-    if(p->pthread == curproc){
-      p->sz = sz;
-    }
-  }
+  // for(p = ptable.proc; p<&ptable.proc[NPROC]; p++){
+  //   if(p->pthread == curproc){
+  //     p->sz = sz;
+  //   }
+  // }
 
   switchuvm(curproc);
   return 0;
@@ -480,8 +480,13 @@ exit(void)
   acquire(&ptable.lock);
 
   // Parent might be sleeping in wait().
-  wakeup1(curproc->parent);
-  wakeup1(curproc->pthread);
+  //wakeup1(curproc->parent);
+  if(curproc->isThread){
+    wakeup1(curproc->pthread);
+  }else{
+    wakeup1(curproc->parent);
+  }
+  
 
   // Pass abandoned children to init.
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){

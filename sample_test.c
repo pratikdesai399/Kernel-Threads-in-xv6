@@ -166,16 +166,120 @@ void childkilltest(){
 
 }
 
+void thread1(void* arg){
+    printf(1,"HELLO\n");
+    exit();
+}
+
+void thread(void* arg){
+    THREAD t1;
+    t1 = create_thread(thread1, 0, CLONE_VM);
+    join_threads(t1);
+    exit();
+
+}
+
+void threadinthread(){
+    THREAD t;
+    t = create_thread(thread, 0, CLONE_VM);
+    join_threads(t);
+    
+}
+
+
+//JOIN WAIT TEST
+void jwt(void *arg){
+    int x = (int)arg;
+    printf(1,"%d\n", x);
+    exit();
+}
+void joinwaittest(){
+    
+    THREAD t[2];
+    int one = 5000, two = 2000;
+    int tgid = fork();
+    if(!tgid){
+        //CHILD
+        t[0] = create_thread(jwt, (void*)one, CLONE_VM);
+        t[1] = create_thread(jwt, (void*)two, CLONE_VM);
+        int ret1 = join_threads(t[0]);
+        int ret2 = join_threads(t[1]);
+
+        if(ret1 != t[0].pid || ret2 != t[1].pid){
+            printf(1,"Wait reaped before join. TEST FAILED\n");
+        }
+        exit();
+        
+    }
+    int ret;
+    while((ret = wait()) != -1);
+    exit();
+}
+
+//WAIT CHILD TEST
+// void wct(void*arg){
+    
+//     int ret = wait();
+//     printf(1,"%d\n", ret);
+//     exit();
+// }
+
+// void waitchildtest(){
+//     int ret = fork();
+//     if(!ret){
+//         //CHILD
+//         sleep(30);
+//         exit();
+//     }
+//     THREAD t = create_thread(wct, 0, CLONE_THREAD);
+//     ret = join_threads(t);
+//     ret = wait();
+//     if(ret != -1){
+//         printf(1,"TEST FAILED\n");
+//     }else{
+//         printf(1,"TEST PASSED\n");
+//     }
+    
+// }
+
+
+//RACE TEST
+// Threads are racing to increment a single integer
+void race(void*arg){
+    int *x = (int*)arg;
+    for(int i = 0; i < 1000;i++){
+        *x += 1;
+    }
+    exit();
+}
+
+void racing(){
+    THREAD t[50];
+    int v = 0;
+    for(int i = 0; i < 50; i++){
+        t[i] = create_thread(race,(void*)&v, CLONE_VM );
+        join_threads(t[i]);
+    }
+    if(v != 50*1000){
+        printf(1,"FAILES\n");
+    }else{
+        printf(1,"TEST PASSED\n");
+    }
+}
 
 int main(int argc, char *argv[])
 {
-    
+    threadinthread();
     Matrix();
     Get_ids();
     Clone_Vm();
     Counter();
     joinordertest();
     childkilltest();
+    joinwaittest();
+    waitchildtest();
+    racing();
+    
     
     
 
