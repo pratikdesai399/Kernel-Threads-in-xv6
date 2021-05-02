@@ -18,6 +18,58 @@
 
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
+
+// HANDLES OFILE_CLONE ARRAY FILE OPEN
+void
+open_ofile_clone(struct proc *curproc, struct file *f, int fd)
+{
+  int i;
+  for(i = 0; i < NPROC; i++) {
+    if(curproc->ofile_clone[i] != 0 && curproc->ofile_clone[i] != curproc) {
+      if((curproc->ofile_clone[i])->ofile[fd] == f) {
+        return;
+      }
+      (curproc->ofile_clone[i])->ofile[fd] = f;
+      open_ofile_clone(curproc->ofile_clone[i], f, fd);
+    }
+  }
+  return;
+}
+
+// HANDLES OFILE_CLONE FILE CLOSE
+void
+close_ofile_clone(struct proc *curproc, int fd)
+{
+  int i;
+  for(i = 0; i < NPROC; i++) {
+    if(curproc->ofile_clone[i] != 0 && curproc->ofile_clone[i] != curproc) {
+      if((curproc->ofile_clone[i])->ofile[fd] == 0) {
+        return;
+      }
+      (curproc->ofile_clone[i])->ofile[fd] = 0;
+      close_ofile_clone(curproc->ofile_clone[i], fd);
+    }
+  }
+  return;
+}
+
+// CWD_CLONE HANDLING
+void
+pwd_clone(struct proc *curproc, struct inode *ip)
+{
+  int i;
+  for(i = 0; i < NPROC; i++) {
+    if(curproc->cwd_clone[i] != 0 && curproc->cwd_clone[i] != curproc) {
+      if((curproc->cwd_clone[i])->cwd == ip) {
+        return;
+      }
+      (curproc->cwd_clone[i])->cwd = ip;
+      pwd_clone(curproc->cwd_clone[i], ip);
+    }
+  }
+  return;
+}
+
 static int
 argfd(int n, int *pfd, struct file **pf)
 {
@@ -46,6 +98,7 @@ fdalloc(struct file *f)
   for(fd = 0; fd < NOFILE; fd++){
     if(curproc->ofile[fd] == 0){
       curproc->ofile[fd] = f;
+      open_ofile_clone(curproc, f, fd);
       return fd;
     }
   }
@@ -100,6 +153,7 @@ sys_close(void)
     return -1;
   myproc()->ofile[fd] = 0;
   fileclose(f);
+  close_ofile_clone(myproc(), fd);
   return 0;
 }
 
@@ -389,6 +443,9 @@ sys_chdir(void)
   iunlock(ip);
   iput(curproc->cwd);
   end_op();
+  if(curproc->cwd != ip){
+    pwd_clone(curproc, ip);
+  }
   curproc->cwd = ip;
   return 0;
 }
@@ -442,3 +499,6 @@ sys_pipe(void)
   fd[1] = fd1;
   return 0;
 }
+
+
+

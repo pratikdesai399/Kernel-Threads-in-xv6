@@ -190,13 +190,14 @@ void threadinthread(){
 //JOIN WAIT TEST
 void jwt(void *arg){
     int x = (int)arg;
-    printf(1,"%d\n", x);
+    //printf(1,"%d\n", x);
+    sleep(x);
     exit();
 }
 void joinwaittest(){
     
     THREAD t[2];
-    int one = 5000, two = 2000;
+    int one = 5, two = 2;
     int tgid = fork();
     if(!tgid){
         //CHILD
@@ -207,6 +208,8 @@ void joinwaittest(){
 
         if(ret1 != t[0].pid || ret2 != t[1].pid){
             printf(1,"Wait reaped before join. TEST FAILED\n");
+        }else{
+            printf(1,"JOIN WAIT TEST PASSED\n\n");
         }
         exit();
         
@@ -261,14 +264,70 @@ void racing(){
         join_threads(t[i]);
     }
     if(v != 50*1000){
-        printf(1,"FAILES\n");
+        printf(1,"RACING FAILED\n");
     }else{
-        printf(1,"TEST PASSED\n");
+        printf(1,"RACING TEST PASSED\n\n");
+    }
+}
+
+//CHILD EXEC TEST
+// char *threadargs[] = {"ls", 0};
+// void threadchild(void*arg){
+//     int ret = exec("ls", threadargs);
+//     if(ret == -1){
+//         printf(1,"\nEXEC FAILED\n");
+//     }
+//     exit();
+// }
+
+
+// void childexectest(){
+//     THREAD t[2];
+//     int x = 10;
+//     int ret = fork();
+//     if(!ret){
+//         //CHILD
+//         t[0] = create_thread(threadchild, 0,CLONE_VM);
+//         t[1] = create_thread(jointestthread, (void*)&x,CLONE_VM);
+//         join_threads(t[1]);
+//         printf(1,"EXEC TEST FAILED/n");
+//         join_threads(t[0]);
+//         exit();
+
+//     }else{
+//         int ret2 = wait();
+//         if(ret == ret2){
+//             printf(1,"EXEC TEST PASSED\n");
+//         }else{
+//             printf(1,"EXEC TEST FAILED ret : %d , ret2 : %d\n", ret,ret2);
+//         }
+//     }
+// }
+
+//CLONE FILES TESTING
+void testf(void *arg){
+    int fd = open("README", O_RDWR);
+    printf(1,"%d\n", fd);
+    exit();
+}
+
+void Clone_Files(){
+    THREAD t;
+    char buff[100];
+    t = create_thread(testf, 0, CLONE_FILES);
+    join_threads(t);
+    int ret = read(3,&buff, 20);
+    if(ret > 0){
+        printf(1,"TEST CASE PASSED FOR CLONE_FILES\n");
+        printf(1,"RET : %d\n\n", ret);
     }
 }
 
 int main(int argc, char *argv[])
 {
+    racing();
+    //childexectest();
+    Clone_Files();
     threadinthread();
     Matrix();
     Get_ids();
@@ -277,8 +336,11 @@ int main(int argc, char *argv[])
     joinordertest();
     childkilltest();
     joinwaittest();
-    waitchildtest();
-    racing();
+    
+
+    //waitchildtest();
+    
+    
     
     
     

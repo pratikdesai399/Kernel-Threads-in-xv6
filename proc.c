@@ -299,6 +299,16 @@ int clone(void(*f)(void*), void* arg, void* stack, int flags){
 
   //CLONE_FS FLAG HANDLING
   if(np->CLONE_FS){
+    for(i = 0; i < NPROC; i++) {
+      if(np->cwd_clone[i] == 0) {
+        np->cwd_clone[i] = currproc;
+      }
+    }
+    for(i = 0; i < NPROC; i++) {
+      if(currproc->cwd_clone[i] == 0) {
+        currproc->cwd_clone[i] = np;
+      }
+    }
     np->cwd = currproc->cwd;
   }else{
     np->cwd = idup(currproc->cwd);
@@ -306,11 +316,20 @@ int clone(void(*f)(void*), void* arg, void* stack, int flags){
 
   //CLONE_FILES FLAG HANDLING
   if(np->CLONE_FILES){
-    for(i = 0; i < NOFILE; i++){
-      if(currproc->ofile[i]){
-        np->ofile[i] = currproc->ofile[i];
+    for(i = 0; i < NPROC; i++) {
+      if(np->ofile_clone[i] == 0) {
+        np->ofile_clone[i] = currproc;
       }
     }
+    for(i = 0; i < NPROC; i++) {
+      if(currproc->ofile_clone[i] == 0) {
+        currproc->ofile_clone[i] = np;
+      }
+    }
+    
+    for(i = 0; i < NOFILE; i++)
+      if(currproc->ofile[i])
+        np->ofile[i] = currproc->ofile[i];
   }else{
     for(i = 0; i < NOFILE; i++){
       if(currproc->ofile[i]){
@@ -464,18 +483,67 @@ exit(void)
   if(curproc == initproc)
     panic("init exiting");
 
-  // Close all open files.
-  for(fd = 0; fd < NOFILE; fd++){
-    if(curproc->ofile[fd]){
-      fileclose(curproc->ofile[fd]);
-      curproc->ofile[fd] = 0;
+  // HANDLE OFILE_CLONE
+  for(int i = 0; i < NPROC; i++) {
+    if(curproc->ofile_clone[i] != 0) {
+      p = curproc->ofile_clone[i];
+      for(int j = 0; j < NPROC; j++) {
+        if(p->ofile_clone[j] == curproc) {
+          p->ofile_clone[j] = 0;
+          break;
+        }
+      }
+      curproc->ofile_clone[i] = 0;
     }
   }
 
-  begin_op();
-  iput(curproc->cwd);
-  end_op();
-  curproc->cwd = 0;
+  // HANDLE CWD_CLONE
+  for(int i = 0; i < NPROC; i++) {
+    if(curproc->cwd_clone[i] != 0) {
+      p = curproc->cwd_clone[i];
+      for(int j = 0; j < NPROC; j++) {
+        if(p->cwd_clone[j] == curproc) {
+          p->cwd_clone[j] = 0;
+          break;
+        }
+      }
+      curproc->cwd_clone[i] = 0;
+    }
+  }
+
+
+
+
+  // Close all open files.
+  // Close files for processes
+  if(curproc->CLONE_FILES){
+    for(fd = 0; fd < NOFILE; fd++){
+      if(curproc->ofile[fd]){
+        // fileclose(curproc->ofile[fd]);
+        curproc->ofile[fd] = 0;
+      }
+    }
+  }else{
+    for(fd = 0; fd < NOFILE; fd++){
+      if(curproc->ofile[fd]){
+        fileclose(curproc->ofile[fd]);
+        curproc->ofile[fd] = 0;
+      }
+    }
+  }
+  
+  //Do this only when clone_fs is not set
+
+  if(curproc->CLONE_FS){
+    curproc->cwd = 0;
+  }else{
+    begin_op();
+    iput(curproc->cwd);
+    end_op();
+    curproc->cwd = 0;
+  }
+
+  
 
   acquire(&ptable.lock);
 

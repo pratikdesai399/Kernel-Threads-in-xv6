@@ -58,6 +58,8 @@ struct proc {
   int CLONE_FS;
   int CLONE_PARENT;
   int CLONE_THREAD;
+  struct proc *ofile_clone[NPROC]; 
+  struct proc *cwd_clone[NPROC];
 };
 
 // Process memory is laid out contiguously, low addresses first:
