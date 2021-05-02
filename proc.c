@@ -401,10 +401,6 @@ int clone(void(*f)(void*), void* arg, void* stack, int flags){
   //Child thread to be started from this address
   np->tf->eip = (uint)f;
 
-
-
-
-
   //cprintf("PID for cloned process : %d\n", pid);
 
   acquire(&ptable.lock);

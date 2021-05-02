@@ -122,8 +122,12 @@ void Clone_Vm(){
     THREAD t = create_thread(test_files, (void*)fd, CLONE_VM || CLONE_FILES);
     join_threads(t);
     printf(1,"\nAFTER JOIN\n");
-    read(fd, &buff, 100);
-    write(1, &buff, 100);
+    int ret1 = read(3, &buff, 100);
+    if(ret1 == -1){
+        printf(1,"TEST FAILED\n\n");
+    }else{
+        printf(1,"TEST PASSED\n\n");
+    }
 }
 
 //JOIN ORDER TEST
@@ -166,6 +170,7 @@ void childkilltest(){
 
 }
 
+//THREAD IN THREAD
 void thread1(void* arg){
     printf(1,"HELLO\n");
     exit();
@@ -216,7 +221,7 @@ void joinwaittest(){
     }
     int ret;
     while((ret = wait()) != -1);
-    exit();
+    
 }
 
 //WAIT CHILD TEST
@@ -323,10 +328,144 @@ void Clone_Files(){
     }
 }
 
+//MATRIX MULTIPLICATION
+int no_of_threads = 3;
+int r1,c1,r2,c2;
+int mat1[100][100];
+int mat2[100][100];
+int res[100][100];
+
+void multiplication(void *arg){
+    int n = (int)arg;
+    //printf("%d\n",r1);
+    int start = (n*r1)/no_of_threads;
+    int end = ((n+1)*r1)/no_of_threads;
+
+    for(int i = start ; i < end; i++){
+        for(int j = 0; j < c2; j++){
+            res[i][j] = 0;
+            for(int k = 0 ; k < c1; k++){
+                res[i][j] += mat1[i][k]*mat2[k][j];
+            }
+        }
+    }
+    //Printing matrix
+    printf(1,"\n");
+    //printf("Thread no %ld\n",n);
+    if(n == 0){
+        printf(1,"%d %d\n",r1,c2);
+        for(int r=0; r < r1; r++){
+        for(int c = 0; c < c2; c++){
+            printf(1,"%d",res[r][c]);
+        }
+        printf(1,"\n");
+    }
+    }
+    exit();
+}
+
+void matrixMulti(){
+    //Declare number of threads
+    THREAD tid[no_of_threads];
+    r1 = 1; 
+    c1 = 3;
+    for(int row = 0; row<r1; row++){
+        for(int col = 0; col < c1; col++){
+            mat1[row][col] = 2;
+        }
+    }
+
+    r2 = 3; c2 = 1;
+    
+    for(int row = 0; row<r2; row++){
+        for(int col = 0; col < c2; col++){
+            mat2[row][col] = 3;
+        }
+    }
+
+    //Creating threads
+    for(int i = 0; i < no_of_threads; i++){
+        tid[i] = create_thread(multiplication, (void*)i, CLONE_VM);
+        
+    }
+    for(int i = 0; i < no_of_threads; i++){
+        join_threads(tid[i]);
+    }
+    if(res[0][0] == 18){
+        printf(1,"TEST CASE PASSED\n\n");
+    }
+
+}
+
+//FLAGS TESTING
+int VM_FLAG_TEST = 0;
+
+void testFlags(void* arg){
+    char buf[10];
+    int fd = (int)arg;
+    //int fd = open("README", O_RDWR);
+    int ret = read(fd, &buf, 10);
+    if(fd){
+        printf(1,"BEFORE CALLING THREAD\n");
+        if(ret > 0){
+            printf(1,"READ SUCCESSFUL\n");
+            printf(1,"%d READ BYTES\n",ret);
+        }else{
+            printf(1,"READ UNSUCCESSFULL\n");
+        }
+        int pid = getpid();
+        int tgid = gettgid();
+        int ppid = getppid();
+        VM_FLAG_TEST++;
+        printf(1,"GLOBAL INT VM_FLAG_TEST : %d\nFD : %d\nPID : %d\nTGID : %d\nPPID : %d\n\n",VM_FLAG_TEST,fd,pid,tgid,ppid);
+        if(VM_FLAG_TEST){
+            printf(1,"CLONE VM TEST PASSED\n");
+        }else{
+            printf(1,"CLONE VM TEST FAILED\n");
+        }
+
+    }else{
+        printf(1,"FILE OPEN FAILED\n");
+    }
+    exit();
+
+}
+
+void testallflags(){
+    THREAD t1;
+    char buf[10];
+    int fd = open("README", O_RDWR);
+    int ret = read(fd, &buf, 10);
+    if(fd){
+        printf(1,"BEFORE CALLING THREAD\n");
+        if(ret > 0){
+            printf(1,"READ SUCCESSFUL\n");
+            printf(1,"%d READ BYTES\n",ret);
+        }else{
+            printf(1,"READ UNSUCCESSFULL\n");
+        }
+        int pid = getpid();
+        int tgid = gettgid();
+        int ppid = getppid();
+        printf(1,"GLOBAL INT VM_FLAG_TEST : %d\nFD : %d\nPID : %d\nTGID : %d\nPPID : %d\n\n",VM_FLAG_TEST,fd,pid,tgid,ppid);
+
+        t1 = create_thread(testFlags, (void*)fd, CLONE_VM);
+        join_threads(t1);
+
+    }else{
+        printf(1,"FILE OPEN FAILED\n");
+    }
+}
+
+//STRESS TEST
+void stressTest1(){
+    
+}
+
+
 int main(int argc, char *argv[])
 {
     racing();
-    //childexectest();
     Clone_Files();
     threadinthread();
     Matrix();
@@ -336,15 +475,12 @@ int main(int argc, char *argv[])
     joinordertest();
     childkilltest();
     joinwaittest();
-    
+    matrixMulti();
+    testallflags();
+    //stressTest1();
 
+    //childexectest();
     //waitchildtest();
-    
-    
-    
-    
-    
-
     // THREAD threads[100];
     // for(int i = 0; i < 100; i++){
     //     threads[i] = create_thread(test1, (void*)i, CLONE_VM);
