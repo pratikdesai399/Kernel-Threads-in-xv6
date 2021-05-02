@@ -557,7 +557,7 @@ void fork_in_thread() {
   if(var == 2) {
     printf(1, "FORK IN THREAD TEST PASSED\n\n");
   } else {
-    printf(1, "FORK IN THREAD TEST FAILED\n\n");\
+    printf(1, "FORK IN THREAD TEST FAILED\n\n");
   }
 }
 
