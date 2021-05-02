@@ -494,6 +494,7 @@ exit(void)
   }
 
   // HANDLE CWD_CLONE
+  // If CLONE_FS is set we have to handle this
   for(int i = 0; i < NPROC; i++) {
     if(curproc->cwd_clone[i] != 0) {
       p = curproc->cwd_clone[i];
@@ -512,6 +513,7 @@ exit(void)
 
   // Close all open files.
   // Close files for processes
+  // If the CLONE_FILES is set dont close the file
   if(curproc->CLONE_FILES){
     for(fd = 0; fd < NOFILE; fd++){
       if(curproc->ofile[fd]){
@@ -546,7 +548,7 @@ exit(void)
   // Parent might be sleeping in wait().
   //wakeup1(curproc->parent);
   if(curproc->isThread){
-    wakeup1(curproc->pthread);
+    wakeup1(curproc->pthread); //Waking the immediate parent
   }else{
     wakeup1(curproc->parent);
   }

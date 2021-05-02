@@ -275,7 +275,7 @@ void racing(){
     }
 }
 
-//CHILD EXEC TEST
+// //CHILD EXEC TEST
 // char *threadargs[] = {"ls", 0};
 // void threadchild(void*arg){
 //     int ret = exec("ls", threadargs);
@@ -419,9 +419,9 @@ void testFlags(void* arg){
         VM_FLAG_TEST++;
         printf(1,"GLOBAL INT VM_FLAG_TEST : %d\nFD : %d\nPID : %d\nTGID : %d\nPPID : %d\n\n",VM_FLAG_TEST,fd,pid,tgid,ppid);
         if(VM_FLAG_TEST){
-            printf(1,"CLONE VM TEST PASSED\n");
+            printf(1,"CLONE VM TEST PASSED\n\n");
         }else{
-            printf(1,"CLONE VM TEST FAILED\n");
+            printf(1,"CLONE VM TEST FAILED\n\n");
         }
 
     }else{
@@ -458,13 +458,111 @@ void testallflags(){
 }
 
 //STRESS TEST
+#define MAX 100
 void stressTest1(){
+    THREAD thread[100];
+    
+    int f = 0, i;
+    int x = 100;
+    for(i = 0; i < MAX; i++){
+        thread[i] = create_thread(jointestthread,(void*)x, 0 );
+        if(thread[i].pid == -1){
+            break;
+        }
+    }
+
+    if(i < 61){
+        //NPROC value is  64
+        printf(1,"STRESS TEST FAILED\n\n");
+        f = 1;
+    }
+    for(int j = 0; j< i; j++){
+        join_threads(thread[j]);
+    }
+
+    if(!f){
+        printf(1,"STRESS TEST PASSED\n\n");
+    }
+
     
 }
 
+//FORK IN THREAD
+void forkthreadchild(void* arg){
+    int ret = fork();
+    if(!ret){
+        //CHILD
+        printf(1,"CHILD IN THREAD\n");
+        exit();
+    }
+    int ret1 = wait();
+    printf(1,"ret1 : %d\n", ret1);
+    printf(1,"PARENT IN THREAD\nFORK IN THREAD TEST PASSED\n\n");
+    
+    exit();
+}
+
+void forkinThread(){
+    THREAD t;
+    t = create_thread(forkthreadchild, 0, CLONE_VM);
+    join_threads(t);
+}
+
+
+//TEST PROGRAM
+void testThread(void* arg){
+    char* m = (char*)arg;
+    //printf(1,"%d\n", m[4]);
+    for(int i = 0; i < 100;i++){
+        if(m[i] != 0){
+            printf(1,"%d\n", m[i]);
+            exit();
+        }
+    }
+    printf(1,"BUFFER TEST PASSED\n\n");
+    exit();
+}
+void SimpleTest(){
+    char *buff;
+    buff = malloc(100);
+    memset(buff, 0, 100);
+    //printf(1,"%d\n",buff[4]);
+
+    THREAD t = create_thread(testThread, (void*)buff, CLONE_VM);
+    join_threads(t);
+}
+
+//FORK IN THREAD TEST 2
+int var = 0;
+void fork_fun(void *args) {
+  int ret = fork();
+  if(ret == 0) {
+    var+= 1;
+  } 
+  else{
+    int ret1 = wait();
+    printf(1,"%d\n", ret1);
+    var+= 2;
+  }
+  exit();
+}
+
+void test_fork_in_thread() {
+  THREAD thread;
+  int v = 9;
+  // printf()
+  thread = create_thread(fork_fun, (void*)&v, CLONE_VM || CLONE_THREAD);
+  join_threads(thread);
+  if(var == 2) {
+    printf(1, "FORK IN THREAD TEST PASSED\n\n");
+  } else {
+    printf(1, "FORK IN THREAD TEST FAILED\n\n");\
+  }
+}
 
 int main(int argc, char *argv[])
 {
+    
     racing();
     Clone_Files();
     threadinthread();
@@ -477,17 +575,11 @@ int main(int argc, char *argv[])
     joinwaittest();
     matrixMulti();
     testallflags();
-    //stressTest1();
-
-    //childexectest();
-    //waitchildtest();
-    // THREAD threads[100];
-    // for(int i = 0; i < 100; i++){
-    //     threads[i] = create_thread(test1, (void*)i, CLONE_VM);
-    //     join_threads(threads[i]);
-    //     printf(1,"PID: %d\n", threads[i].pid);
-
-    // }
+    stressTest1();
+    forkinThread();
+    SimpleTest();
+    test_fork_in_thread();
+    
     
     exit();
 }
