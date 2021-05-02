@@ -172,7 +172,7 @@ void childkilltest(){
 
 //THREAD IN THREAD
 void thread1(void* arg){
-    printf(1,"HELLO\n");
+    printf(1,"HELLO\n\n");
     exit();
 }
 
@@ -186,6 +186,7 @@ void thread(void* arg){
 
 void threadinthread(){
     THREAD t;
+    printf(1,"THREAD IN THREAD TEST\n");
     t = create_thread(thread, 0, CLONE_VM);
     join_threads(t);
     
@@ -547,12 +548,12 @@ void fork_fun(void *args) {
   exit();
 }
 
-void test_fork_in_thread() {
-  THREAD thread;
+void fork_in_thread() {
+  THREAD t;
   int v = 9;
   // printf()
-  thread = create_thread(fork_fun, (void*)&v, CLONE_VM || CLONE_THREAD);
-  join_threads(thread);
+  t = create_thread(fork_fun, (void*)&v, CLONE_VM || CLONE_THREAD);
+  join_threads(t);
   if(var == 2) {
     printf(1, "FORK IN THREAD TEST PASSED\n\n");
   } else {
@@ -560,12 +561,13 @@ void test_fork_in_thread() {
   }
 }
 
+
 int main(int argc, char *argv[])
 {
-    
+    stressTest1();
+    threadinthread();
     racing();
     Clone_Files();
-    threadinthread();
     Matrix();
     Get_ids();
     Clone_Vm();
@@ -575,10 +577,9 @@ int main(int argc, char *argv[])
     joinwaittest();
     matrixMulti();
     testallflags();
-    stressTest1();
     forkinThread();
     SimpleTest();
-    test_fork_in_thread();
+    fork_in_thread();
     
     
     exit();
